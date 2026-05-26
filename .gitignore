@@ -1,0 +1,35 @@
+# Dataset (large, not committed)
+/data/raw/*
+!/data/raw/.gitkeep
+/data/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# LaTeX build artefacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+report/*.pdf
+src/utils.py
+results/figures/*
+PROJECT_PLAN.md
+ScientificPaperHomeAssignment.pdf

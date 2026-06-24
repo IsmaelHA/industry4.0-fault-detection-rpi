@@ -1,7 +1,6 @@
 # Dataset (large, not committed)
 /data/raw/*
 !/data/raw/.gitkeep
-/data/cache/
 
 # Python
 __pycache__/
@@ -30,6 +29,5 @@ Thumbs.db
 *.fls
 report/*.pdf
 src/utils.py
-results/figures/*
 PROJECT_PLAN.md
 ScientificPaperHomeAssignment.pdf

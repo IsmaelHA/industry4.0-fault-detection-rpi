@@ -1,0 +1,7 @@
+swept_param,m,gamma,sweep_index,file_index
+m,3,0.1,133,532
+m,4,0.1,133,532
+m,5,0.1,134,536
+gamma,4,0.05,133,532
+gamma,4,0.1,133,532
+gamma,4,0.2,135,540

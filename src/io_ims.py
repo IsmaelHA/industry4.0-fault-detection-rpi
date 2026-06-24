@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Union
+from typing import Iterator, List, Tuple, Union
 
 import numpy as np
 
@@ -26,7 +26,7 @@ def list_files(data_root: Union[str, Path]) -> List[Path]:
 
 def load_signal(path: Union[str, Path], channel: int = 0) -> np.ndarray:
     path = Path(path)
-    arr = np.load(path) if path.suffix == ".npy" else np.loadtxt(path)
+    arr = np.loadtxt(path)
     if arr.ndim == 1:
         return arr
     if channel < 0 or channel >= arr.shape[1]:
@@ -34,6 +34,31 @@ def load_signal(path: Union[str, Path], channel: int = 0) -> np.ndarray:
             f"Channel {channel} requested but file has only {arr.shape[1]} channels: {path.name}"
         )
     return arr[:, channel]
+
+
+def display_name(path: Path) -> str:
+    return path.name
+
+
+def iter_signals(
+    cfg: dict,
+    channel: int = None,
+    stride: int = 1,
+    offset: int = 0,
+) -> Iterator[Tuple[int, Path, np.ndarray]]:
+    """Yield (file_idx, path, signal) over the chronological file list.
+
+    ``stride`` selects every Nth file (sparse sampling); ``offset`` shifts the
+    starting file. Only one signal is held in memory at a time.
+    """
+    channel = channel if channel is not None else int(cfg.get("channel", 0))
+    paths = list_files(Path(cfg["data_root"]))
+    for idx, p in enumerate(paths):
+        if idx < offset:
+            continue
+        if (idx - offset) % stride != 0:
+            continue
+        yield idx, p, load_signal(p, channel=channel)
 
 
 def basic_statistics(signal: np.ndarray) -> dict:

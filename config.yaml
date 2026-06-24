@@ -4,7 +4,7 @@ seed: 42
 
 # Dataset
 data_root: ./data/raw/2nd_test
-channel: 0                    # 0 = bearing 1 of Test 2
+channel: 0                          # 0 = bearing 1 of Test 2
 
 # Output
 results_dir: ./results
@@ -14,27 +14,28 @@ figure:
   duration_ms: 50.0
   dpi: 300
 
-# --- Placeholders for later phases (schema is stable) ---
-
 segmentation:
-  window: 2048                # ~100 ms at 20 kHz
-  stride: 2048                # = window means no overlap
+  window: 2048                      # ~100 ms at 20 kHz
+  stride: 2048                      # = window means no overlap
 
 entropy:
-  m: 4
-  delta: 1.0e-3
-  gamma: 1.0e-1
-  adaptive_thresholds: true   # multiply delta/gamma by signal std
-  use_numba: false            # Phase 12
+  m: 4                              # embedding dimension
+  delta: 1.0e-3                     # inner (flat) threshold, raw g units
+  gamma: 1.0e-1                     # outer (steep) threshold, raw g units
+  adaptive_thresholds: false        # fixed thresholds are the primary setting
 
 sweep:
-  sampling_stride: 4          # use every Nth file
+  sampling_stride: 4                # analyse every Nth file
 
-cusum:
-  healthy_fraction: 0.25
-  k: 0.5
-  h: 5.0
+control_limit:                      # turning-point detector (Phase 5)
+  healthy_fraction: 0.25            # first quarter assumed healthy -> baseline
+  n_sigma: 3.0                      # band = mean +/- n_sigma * std
+  min_consecutive: 3                # points outside the band before it counts
+  n_sigma_sweep: [2.0, 3.0, 4.0]    # uncertainty sweep reported in the paper
 
-parallel:
-  enabled: false
-  workers: 4
+comparison:
+  margin: 10                        # files each side of i* labelled 'transition'
+
+sensitivity:                        # parameter tuning (Phase 8, F5)
+  m_values: [3, 4, 5]               # embedding dimension sweep
+  gamma_values: [0.05, 0.1, 0.2]    # threshold sweep (raw g units)

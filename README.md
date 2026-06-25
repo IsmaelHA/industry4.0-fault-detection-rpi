@@ -20,7 +20,6 @@ Run from the repo root with the venv active.
 ```bash
 python scripts/capture_environment.py     # -> results/environment.txt (Pi model, OS, versions)
 python scripts/inspect_dataset.py data/raw # sanity-check files / channels / time span
-pytest -q                                  # unit tests (expect all passing)
 
 python run_pipeline.py                     # Phases 1-6: F1-F4 + 3-stage + CSVs
 python scripts/run_sensitivity.py          # F5 (m sweep + gamma sweep)
@@ -74,7 +73,6 @@ python scripts/build_perf_figure.py        # F6 execution-time plot
 │   ├── run_sensitivity.py
 │   ├── run_perf.py
 │   └── build_perf_figure.py
-├── tests/                # synthetic-signal tests (entropy, segmentation, detector)
 ├── data/raw/             # IMS dataset (not committed)
 └── results/              # outputs (figures + CSVs)
 ```

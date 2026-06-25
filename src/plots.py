@@ -1,4 +1,8 @@
-"""Matplotlib helpers. Agg backend so the same code works headless on the Pi."""
+"""Matplotlib helpers. Agg backend so the same code works headless on the Pi.
+
+Figures carry no in-plot title: the LaTeX caption is the single source of the
+figure description, avoiding duplication in the manuscript.
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ def plot_raw_signal(
     signal: np.ndarray,
     fs: float,
     out_path: Union[str, Path],
-    title: str = "Raw vibration signal",
+    title: str = "",
     duration_ms: float = 50.0,
     ylim: Optional[Tuple[float, float]] = None,
     dpi: int = DEFAULT_DPI,
@@ -28,11 +32,10 @@ def plot_raw_signal(
     n = int(duration_ms * 1e-3 * fs)
     n = max(1, min(n, len(signal)))
     t_ms = np.arange(n) / fs * 1e3
-    fig, ax = plt.subplots(figsize=(8.0, 3.5))
+    fig, ax = plt.subplots(figsize=(8.0, 3.2))
     ax.plot(t_ms, signal[:n], linewidth=0.7, color="#1f4e79")
     ax.set_xlabel("Time (ms)")
     ax.set_ylabel("Amplitude (g)")
-    ax.set_title(title)
     ax.grid(True, alpha=0.3)
     if ylim is not None:
         ax.set_ylim(ylim)
@@ -60,22 +63,24 @@ def _read_timeline_csv(csv_path: Path):
 def plot_timeline(
     csv_path: Union[str, Path],
     out_path: Union[str, Path],
-    title: str = "Slope Entropy evolution",
+    title: str = "",
     thirds: bool = True,
     dpi: int = DEFAULT_DPI,
 ) -> Path:
     idx, mean_H, q25_H, q75_H, _ = _read_timeline_csv(csv_path)
-    fig, ax = plt.subplots(figsize=(9.0, 4.0))
+    # Single-column size (~3.4 in wide) with native fonts so it stays legible
+    # when placed at \linewidth in a two-column IEEE layout.
+    fig, ax = plt.subplots(figsize=(3.45, 2.35))
     ax.fill_between(idx, q25_H, q75_H, color="#1f4e79", alpha=0.25, label="IQR (per file)")
-    ax.plot(idx, mean_H, color="#1f4e79", linewidth=1.2, label="mean H")
+    ax.plot(idx, mean_H, color="#1f4e79", linewidth=1.0, label="mean H")
     if thirds and len(idx) > 0:
         n = len(idx)
         for frac in (1 / 3, 2 / 3):
-            ax.axvline(idx[int(n * frac)], linestyle="--", color="#888", linewidth=0.7)
-    ax.set_xlabel("File index (chronological)")
-    ax.set_ylabel("Normalised Slope Entropy")
-    ax.set_title(title)
-    ax.legend(loc="best")
+            ax.axvline(idx[int(n * frac)], linestyle="--", color="#888", linewidth=0.6)
+    ax.set_xlabel("File index (chronological)", fontsize=9)
+    ax.set_ylabel("Normalised Slope Entropy", fontsize=9)
+    ax.tick_params(labelsize=8)
+    ax.legend(loc="upper left", fontsize=7)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     out_path = Path(out_path)
@@ -90,24 +95,25 @@ def plot_turning_point(
     change_point_sweep_idx: Optional[int],
     band: dict,
     out_path: Union[str, Path],
-    title: str = "Turning-point detection",
+    title: str = "",
     dpi: int = DEFAULT_DPI,
 ) -> Path:
     idx, mean_H, q25_H, q75_H, _ = _read_timeline_csv(csv_path)
-    fig, ax = plt.subplots(figsize=(9.0, 4.5))
+    fig, ax = plt.subplots(figsize=(3.45, 2.7))
     ax.fill_between(idx, q25_H, q75_H, color="#1f4e79", alpha=0.20, label="IQR")
-    ax.plot(idx, mean_H, color="#1f4e79", linewidth=1.2, label="mean H")
-    ax.axhline(band["mu0"], color="#555", linewidth=0.8, label="healthy mean")
-    ax.axhspan(band["lower"], band["upper"], color="#999", alpha=0.15,
-               label="healthy control band")
+    ax.plot(idx, mean_H, color="#1f4e79", linewidth=1.0, label="mean H")
+    # Band lines carry no legend entry (described in the caption) to keep the
+    # legend compact at single-column size.
+    ax.axhline(band["mu0"], color="#555", linewidth=0.8)
+    ax.axhspan(band["lower"], band["upper"], color="#999", alpha=0.15)
     if change_point_sweep_idx is not None and change_point_sweep_idx < len(idx):
         ax.axvline(idx[change_point_sweep_idx], color="#c0392b", linewidth=1.5,
                    label=f"turning point (file {idx[change_point_sweep_idx]})")
-    ax.set_xlabel("File index (chronological)")
-    ax.set_ylabel("Normalised Slope Entropy")
-    ax.set_title(title)
+    ax.set_xlabel("File index (chronological)", fontsize=9)
+    ax.set_ylabel("Normalised Slope Entropy", fontsize=9)
+    ax.tick_params(labelsize=8)
     ax.grid(True, alpha=0.3)
-    ax.legend(loc="best", fontsize=8)
+    ax.legend(loc="lower right", fontsize=7)
     fig.tight_layout()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,11 +129,11 @@ def plot_three_stage_raw(
     out_path: Union[str, Path],
     duration_ms: float = 50.0,
     ylim: Optional[Tuple[float, float]] = None,
-    title: str = "Raw signals across stages",
+    title: str = "",
     dpi: int = DEFAULT_DPI,
 ) -> Path:
     n = int(duration_ms * 1e-3 * fs)
-    fig, axes = plt.subplots(len(signals), 1, figsize=(8.0, 2.4 * len(signals)),
+    fig, axes = plt.subplots(len(signals), 1, figsize=(8.0, 2.1 * len(signals)),
                               sharex=True, sharey=True)
     if len(signals) == 1:
         axes = [axes]
@@ -141,7 +147,6 @@ def plot_three_stage_raw(
         if ylim is not None:
             ax.set_ylim(ylim)
     axes[-1].set_xlabel("Time (ms)")
-    fig.suptitle(title)
     fig.tight_layout()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -154,10 +159,10 @@ def plot_three_stage_entropy(
     distributions: Sequence[np.ndarray],
     labels: Sequence[str],
     out_path: Union[str, Path],
-    title: str = "Entropy distribution per stage",
+    title: str = "",
     dpi: int = DEFAULT_DPI,
 ) -> Path:
-    fig, ax = plt.subplots(figsize=(8.0, 4.0))
+    fig, ax = plt.subplots(figsize=(8.0, 3.8))
     parts = ax.violinplot([np.asarray(d, dtype=np.float64) for d in distributions],
                           showmeans=True, showmedians=False)
     colors = ["#27ae60", "#f39c12", "#c0392b"]
@@ -167,7 +172,6 @@ def plot_three_stage_entropy(
     ax.set_xticks(np.arange(1, len(labels) + 1))
     ax.set_xticklabels(labels)
     ax.set_ylabel("Normalised Slope Entropy")
-    ax.set_title(title)
     ax.grid(True, alpha=0.3, axis="y")
     fig.tight_layout()
     out_path = Path(out_path)
@@ -182,25 +186,26 @@ def plot_sensitivity(
     panel_labels: Sequence[str],
     change_points: Sequence[Optional[int]],
     out_path: Union[str, Path],
-    title: str = "Parameter sensitivity",
+    title: str = "",
     dpi: int = DEFAULT_DPI,
 ) -> Path:
-    fig, axes = plt.subplots(len(csv_paths), 1, figsize=(9.0, 2.4 * len(csv_paths)),
+    # Single-column stack (~3.4 in wide); each panel ~1.4 in tall.
+    fig, axes = plt.subplots(len(csv_paths), 1, figsize=(3.45, 1.45 * len(csv_paths)),
                               sharex=True)
     if len(csv_paths) == 1:
         axes = [axes]
     for ax, csvp, lbl, cp in zip(axes, csv_paths, panel_labels, change_points):
         idx, mean_H, q25_H, q75_H, _ = _read_timeline_csv(csvp)
         ax.fill_between(idx, q25_H, q75_H, alpha=0.25, color="#1f4e79")
-        ax.plot(idx, mean_H, color="#1f4e79", linewidth=1.0)
+        ax.plot(idx, mean_H, color="#1f4e79", linewidth=0.9)
         if cp is not None and cp < len(idx):
-            ax.axvline(idx[cp], color="#c0392b", linewidth=1.2,
+            ax.axvline(idx[cp], color="#c0392b", linewidth=1.1,
                        label=f"i* = file {idx[cp]}")
-            ax.legend(loc="best", fontsize=8)
-        ax.set_ylabel(lbl)
+            ax.legend(loc="upper left", fontsize=6.5)
+        ax.set_ylabel(lbl, fontsize=8)
+        ax.tick_params(labelsize=7)
         ax.grid(True, alpha=0.3)
-    axes[-1].set_xlabel("File index (chronological)")
-    fig.suptitle(title)
+    axes[-1].set_xlabel("File index (chronological)", fontsize=8)
     fig.tight_layout()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,23 +217,32 @@ def plot_sensitivity(
 def plot_perf(
     perf_rows: Sequence[Tuple[str, float, float]],
     out_path: Union[str, Path],
-    title: str = "Per-file processing time",
+    title: str = "",
     dpi: int = DEFAULT_DPI,
 ) -> Path:
+    """Bar chart of mean per-record time. Input means/stds are in *seconds*.
+
+    Plotted in milliseconds on a logarithmic y-axis so that the few-millisecond
+    bars and the 1000 ms real-time budget are both legible on one axis.
+    """
     labels = [r[0] for r in perf_rows]
-    means = np.array([r[1] for r in perf_rows])
-    stds = np.array([r[2] for r in perf_rows])
-    fig, ax = plt.subplots(figsize=(8.0, 4.5))
+    means_ms = np.array([r[1] for r in perf_rows]) * 1000.0
+    stds_ms = np.array([r[2] for r in perf_rows]) * 1000.0
+    fig, ax = plt.subplots(figsize=(7.5, 4.2))
     xs = np.arange(len(labels))
-    ax.bar(xs, means, yerr=stds, color="#1f4e79", alpha=0.85, capsize=4)
-    ax.axhline(1.0, color="#c0392b", linestyle="--", linewidth=1.0,
-               label="Real-time threshold (1 s per 1 s file)")
+    ax.bar(xs, means_ms, yerr=stds_ms, color="#1f4e79", alpha=0.85,
+           capsize=4, zorder=3)
+    ax.axhline(1000.0, color="#c0392b", linestyle="--", linewidth=1.2,
+               label="Real-time budget (1000 ms per 1 s record)")
+    ax.set_yscale("log")
+    ax.set_ylim(1.0, 2000.0)
+    for x, mval in zip(xs, means_ms):
+        ax.text(x, mval * 1.18, f"{mval:.1f} ms", ha="center", va="bottom", fontsize=9)
     ax.set_xticks(xs)
-    ax.set_xticklabels(labels, rotation=15, ha="right")
-    ax.set_ylabel("Mean processing time per file (s)")
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3, axis="y")
-    ax.legend()
+    ax.set_xticklabels(labels, rotation=0, ha="center")
+    ax.set_ylabel("Mean processing time per record (ms, log scale)")
+    ax.grid(True, alpha=0.3, axis="y", which="both")
+    ax.legend(loc="upper right")
     fig.tight_layout()
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
